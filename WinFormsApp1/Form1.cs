@@ -1,121 +1,153 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
+using System.Globalization;
 using System.Windows.Forms;
 
-namespace WinFormsApp1
+namespace WinFormsApp1;
+
+public partial class Form1 : Form
 {
-    public partial class Form1 : Form
+    // Cache for commonly used strings to reduce allocations
+    private const string ResultPrefix = "SONUÇ=";
+    private const string ErrorTitle = "ERROR";
+    private const string ErrorMessage = "Girilen değerleri kontrol ediniz";
+    
+    public Form1()
     {
-        public Form1()
+        InitializeComponent();
+        
+        // Optimize form loading
+        SetStyle(ControlStyles.AllPaintingInWmPaint | 
+                 ControlStyles.UserPaint | 
+                 ControlStyles.DoubleBuffer, true);
+        
+        // Pre-validate input format
+        textBox1.KeyPress += ValidateNumericInput;
+        textBox2.KeyPress += ValidateNumericInput;
+    }
+    
+    private void ValidateNumericInput(object? sender, KeyPressEventArgs e)
+    {
+        // Allow only numbers, decimal point, negative sign, and control keys
+        if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) && 
+            e.KeyChar != '.' && e.KeyChar != ',' && e.KeyChar != '-')
         {
-            InitializeComponent();
+            e.Handled = true;
         }
+    }
+    
+    private bool TryGetInputValues(out decimal value1, out decimal value2)
+    {
+        value1 = 0;
+        value2 = 0;
+        
+        // Use TryParse instead of Convert for better performance and error handling
+        return decimal.TryParse(textBox1.Text, NumberStyles.Number, 
+                               CultureInfo.CurrentCulture, out value1) &&
+               decimal.TryParse(textBox2.Text, NumberStyles.Number, 
+                               CultureInfo.CurrentCulture, out value2);
+    }
+    
+    private void ShowResult(decimal result)
+    {
+        // Use string interpolation for better performance
+        label3.Text = $"{ResultPrefix}{result}";
+    }
+    
+    private void ShowFormattedResult(decimal result)
+    {
+        // Use string interpolation with format specifier
+        label3.Text = $"{ResultPrefix}{result:N2}";
+    }
+    
+    private void HandleInputError()
+    {
+        // Clear inputs and show error
+        textBox1.Clear();
+        textBox2.Clear();
+        textBox1.Focus();
+        
+        // Use cached strings to reduce allocations
+        MessageBox.Show(ErrorMessage, ErrorTitle, 
+                       MessageBoxButtons.OK, MessageBoxIcon.Error);
+    }
 
-        private void button1_Click(object sender, EventArgs e)
+    private void button1_Click(object sender, EventArgs e)
+    {
+        if (TryGetInputValues(out decimal sayi1, out decimal sayi2))
         {
-            try
-            {
-                decimal sayi1 = Convert.ToDecimal(textBox1.Text);
-                decimal sayi2 = Convert.ToDecimal(textBox2.Text);
-                decimal sonuc = sayi1 + sayi2;
-                label3.Text = "SONUÇ=" + sonuc.ToString();
-
-            }
-            catch 
-            {
-                textBox1.Text = "";
-                textBox2.Clear();
-                textBox1.Focus();
-                MessageBox.Show("Girilen değerleri kontrol ediniz", "ERROR",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            ShowResult(sayi1 + sayi2);
         }
-
-        private void button2_Click(object sender, EventArgs e)
+        else
         {
-            try
-            {
-                decimal sayi1 = Convert.ToDecimal(textBox1.Text);
-                decimal sayi2 = Convert.ToDecimal(textBox2.Text);
-                decimal sonuc = sayi1 - sayi2;
-                label3.Text = "SONUÇ=" + sonuc.ToString();
-
-            }
-            catch
-            {
-                textBox1.Text = "";
-                textBox2.Clear();
-                textBox1.Focus();
-                MessageBox.Show("Girilen değerleri kontrol ediniz", "ERROR",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            HandleInputError();
         }
+    }
 
-        private void button4_Click(object sender, EventArgs e)
+    private void button2_Click(object sender, EventArgs e)
+    {
+        if (TryGetInputValues(out decimal sayi1, out decimal sayi2))
         {
-            try
-            {
-                decimal sayi1 = Convert.ToDecimal(textBox1.Text);
-                decimal sayi2 = Convert.ToDecimal(textBox2.Text);
-                decimal sonuc = sayi1 * sayi2;
-                label3.Text = "SONUÇ=" + sonuc.ToString();
-
-            }
-            catch
-            {
-                textBox1.Text = "";
-                textBox2.Clear();
-                textBox1.Focus();
-                MessageBox.Show("Girilen değerleri kontrol ediniz", "ERROR",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            ShowResult(sayi1 - sayi2);
         }
-
-        private void button3_Click(object sender, EventArgs e)
+        else
         {
-            try
-            {
-                decimal sayi1 = Convert.ToDecimal(textBox1.Text);
-                decimal sayi2 = Convert.ToDecimal(textBox2.Text);
-                decimal sonuc = sayi1 / sayi2;
-                label3.Text = "SONUÇ=" + String.Format("{0:n2}", sonuc);
-
-            }
-            catch
-            {
-                textBox1.Text = "";
-                textBox2.Clear();
-                textBox1.Focus();
-                MessageBox.Show("Girilen değerleri kontrol ediniz", "ERROR",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            HandleInputError();
         }
+    }
 
-        private void button5_Click(object sender, EventArgs e)
+    private void button4_Click(object sender, EventArgs e)
+    {
+        if (TryGetInputValues(out decimal sayi1, out decimal sayi2))
         {
-            try
-            {
-                double sayi1 = Convert.ToDouble(textBox1.Text);
-                double sayi2 = Convert.ToDouble(textBox2.Text);
-                double sonuc = Math.Pow(sayi1, sayi2);
+            ShowResult(sayi1 * sayi2);
+        }
+        else
+        {
+            HandleInputError();
+        }
+    }
 
-                label3.Text = "SONUÇ=" + sonuc.ToString();
-
-            }
-            catch
+    private void button3_Click(object sender, EventArgs e)
+    {
+        if (TryGetInputValues(out decimal sayi1, out decimal sayi2))
+        {
+            if (sayi2 == 0)
             {
-                textBox1.Text = "";
-                textBox2.Clear();
-                textBox1.Focus();
-                MessageBox.Show("Girilen değerleri kontrol ediniz", "ERROR",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Sıfıra bölme hatası!", ErrorTitle, 
+                               MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
+            ShowFormattedResult(sayi1 / sayi2);
+        }
+        else
+        {
+            HandleInputError();
+        }
+    }
+
+    private void button5_Click(object sender, EventArgs e)
+    {
+        // Use double for Math.Pow operations
+        if (double.TryParse(textBox1.Text, NumberStyles.Number, 
+                           CultureInfo.CurrentCulture, out double sayi1) &&
+            double.TryParse(textBox2.Text, NumberStyles.Number, 
+                           CultureInfo.CurrentCulture, out double sayi2))
+        {
+            double result = Math.Pow(sayi1, sayi2);
+            
+            // Check for overflow or invalid results
+            if (double.IsInfinity(result) || double.IsNaN(result))
+            {
+                MessageBox.Show("Sonuç çok büyük veya geçersiz!", ErrorTitle, 
+                               MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            
+            label3.Text = $"{ResultPrefix}{result}";
+        }
+        else
+        {
+            HandleInputError();
         }
     }
 }
